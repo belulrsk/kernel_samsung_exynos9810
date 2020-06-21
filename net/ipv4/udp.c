@@ -116,7 +116,9 @@
 #include <net/sock_reuseport.h>
 #include <net/addrconf.h>
 // KNOX NPA - START
+#ifdef CONFIG_KNOX_NCM
 #include <net/ncm.h>
+#endif
 // KNOX NPA - END
 
 struct udp_table udp_table __read_mostly;
@@ -1819,11 +1821,13 @@ int __udp4_lib_rcv(struct sk_buff *skb, struct udp_table *udptable,
 		struct dst_entry *dst = skb_dst(skb);
 		int ret;
 		// KNOX NPA - START
+#ifdef CONFIG_KNOX_NCM
 		struct nf_conn *ct = NULL;
 		enum ip_conntrack_info ctinfo;
 		struct nf_conntrack_tuple *tuple = NULL;
 		char srcaddr[INET6_ADDRSTRLEN_NAP];
 		char dstaddr[INET6_ADDRSTRLEN_NAP];
+#endif
 		// KNOX NPA - END
 
 		if (unlikely(rcu_dereference(sk->sk_rx_dst) != dst))
@@ -1831,6 +1835,7 @@ int __udp4_lib_rcv(struct sk_buff *skb, struct udp_table *udptable,
 
 		// KNOX NPA - START
 		/* function to handle open flows with incoming udp packets */
+#ifdef CONFIG_KNOX_NCM
 		if (check_ncm_flag()) {
 			if ( (sk) && (sk->sk_protocol == IPPROTO_UDP) ) {
 				ct = nf_ct_get(skb, &ctinfo);
@@ -1876,6 +1881,7 @@ int __udp4_lib_rcv(struct sk_buff *skb, struct udp_table *udptable,
 				}
 			}
 		}
+#endif
 		// KNOX NPA - END
 
 		ret = udp_unicast_rcv_skb(sk, skb, uh);
@@ -1888,6 +1894,7 @@ int __udp4_lib_rcv(struct sk_buff *skb, struct udp_table *udptable,
 						saddr, daddr, udptable, proto);
 
 	sk = __udp4_lib_lookup_skb(skb, uh->source, uh->dest, udptable);
+#ifdef CONFIG_KNOX_NCM  
 	if (sk) {
 		// KNOX NPA - START
 		struct nf_conn *ct = NULL;
@@ -1946,8 +1953,12 @@ int __udp4_lib_rcv(struct sk_buff *skb, struct udp_table *udptable,
 		}
 		// KNOX NPA - END
 
-                return udp_unicast_rcv_skb(sk, skb, uh);
+		return udp_unicast_rcv_skb(sk, skb, uh);
 	}
+#else
+	if (sk)
+		return udp_unicast_rcv_skb(sk, skb, uh);
+#endif
 
 	if (!xfrm4_policy_check(NULL, XFRM_POLICY_IN, skb))
 		goto drop;
