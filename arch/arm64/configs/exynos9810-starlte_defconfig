@@ -5189,9 +5189,7 @@ CONFIG_GATOR=y
 #
 # CONFIG_MPSD is not set
 # CONFIG_MPSD_DEBUG is not set
-CONFIG_TZIC=y
-CONFIG_TZIC_USE_TRUSTONIC=y
-# CONFIG_TZIC_DEFAULT is not set
+# CONFIG_TZIC is not set
 
 #
 # Firmware Drivers
